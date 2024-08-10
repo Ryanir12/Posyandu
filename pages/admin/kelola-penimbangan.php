@@ -103,7 +103,7 @@
                                                         <td><?php echo $row['ket']; ?></td>
                                                         <td>
                                                             <div class="btn-group">
-                                                                <a href="ubah-penimbangan.php?id=<?php echo $row['id_penimbangan']; ?>" class="btn btn-warning btn-sm">Edit</a>
+                                                                <a href="ubah-penimbangan.php?id=<?php echo $row['id_penimbangan']; ?>" class="btn btn-success btn-sm">Edit</a>
                                                                 <a href="hapus-penimbangan.php?id=<?php echo $row['id_penimbangan']; ?>" class="btn btn-danger btn-sm" onclick="return confirm('Anda yakin ingin menghapus data ini?');">Hapus</a>
                                                             </div>
                                                         </td>

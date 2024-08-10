@@ -121,7 +121,7 @@
                                        
                                         <td>
                                             <div class='btn-group'>
-                                                <a href='ubah-anak.php?id={$id}' class='btn btn-warning btn-sm'>Edit</a>
+                                                <a href='ubah-anak.php?id={$id}' class='btn btn-success btn-sm'>Edit</a>
                                                 <a href='hapus-anak.php?id={$id}' class='btn btn-danger btn-sm' onclick='return confirm(\"Apakah Anda yakin ingin menghapus data ini?\")'>Delete</a>
                                             </div>
                                         </td>

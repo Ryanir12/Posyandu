@@ -82,7 +82,7 @@
                                                         <td class="align-middle"><?php echo $item['email']; ?></td>
                                                         <td class="align-middle"><?php echo $item['jabatan']; ?></td>
                                                         <td class="text-center">
-                                                            <a href="ubah-petugas.php?id=<?php echo $item['id_user'] ?>" class="btn btn-info btn-sm mx-1 float-left">Ubah</a>
+                                                            <a href="ubah-petugas.php?id=<?php echo $item['id_user'] ?>" class="btn btn-success btn-sm mx-1 float-left">Ubah</a>
 
                                                             <form action="hapus-petugas.php?id=<?php echo $item['id_user'] ?>" method="post">
                                                                 <button type="submit" class="btn btn-danger btn-sm mx-1 float-left">Hapus</button>

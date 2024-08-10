@@ -120,7 +120,7 @@
                                                         <td>{$row['pendidikan_terakhir']}</td>
                                                         <td>
                                                             <div class='btn-group'>
-                                                                <a href='ubah-bidan.php?id={$id}' class='btn btn-warning btn-sm'>Edit</a>
+                                                                <a href='ubah-bidan.php?id={$id}' class='btn btn-success btn-sm'>Edit</a>
                                                                 <a href='hapus-bidan.php?id={$id}' class='btn btn-danger btn-sm' onclick='return confirm(\"Apakah Anda yakin ingin menghapus data ini?\")'>Delete</a>
                                                             </div>
                                                         </td>

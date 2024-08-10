@@ -102,7 +102,7 @@
                                         <td>{$row['nama_suami']}</td>
                                         <td>{$row['no_telpon']}</td>
                                         <td class='table-action-buttons'>
-                                            <a href='ubah-orgtua.php?no={$no}' class='btn btn-warning btn-sm'>Edit</a>
+                                            <a href='ubah-orgtua.php?no={$no}' class='btn btn-success btn-sm'>Edit</a>
                                             <a href='hapus-orgtua.php?no={$no}' class='btn btn-danger btn-sm' onclick='return confirm(\"Apakah Anda yakin ingin menghapus data ini?\")'>Delete</a>
                                         </td>
                                     </tr>";
