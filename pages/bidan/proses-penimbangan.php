@@ -12,11 +12,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id_anak = $_POST['id_anak'];
     $bidan_id = $_POST['bidan'];
     $petugas = $_POST['petugas'];
-    $tanggal_imunisasi = $_POST['tgl_imunisasi'];
-    $usia_anak = $_POST['usia'];
-    $jenis_imunisasi = $_POST['jenis_imunisasi'];
-    $vitamin = $_POST['vitamin'];
-    $keterangan = $_POST['keterangan'];
+    $tanggal_timbangan = $_POST['tgl_timbangan'];
+    $usia = $_POST['usia'];
+    $berat_badan = $_POST['bb'];
+    $tinggi_badan = $_POST['tb'];
+    $deteksi = $_POST['deteksi'];
+    $keterangan = $_POST['ket'];
 
     // Ambil nomor orang tua berdasarkan id anak
     $query_orang_tua_no = "SELECT id_ibu FROM anak WHERE id = ?";
@@ -28,33 +29,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $orang_tua_no = $row['id_ibu'];
         } else {
             $_SESSION['error'] = "Nomor orang tua tidak ditemukan.";
-            header("Location: tambah-imunisasi.php");
+            header("Location: tambah-penimbangan.php");
             exit;
         }
         $stmt->close();
     } else {
         $_SESSION['error'] = "Gagal menyiapkan statement: " . $koneksi->error;
-        header("Location: tambah-imunisasi.php");
+        header("Location: tambah-penimbangan.php");
         exit;
     }
 
-    // Query untuk menyimpan data imunisasi ke tabel kelola_imunisasi
-    $query = "INSERT INTO kelola_imunisasi (anak_id, orang_tua_no, bidan_id, petugas, tanggal_imunisasi, usia_anak, jenis_imunisasi, vitamin, keterangan) 
+    // Query untuk menyimpan data penimbangan ke tabel penimbangan
+    $query = "INSERT INTO penimbangan (tgl_timbangan, usia, bb, tb, deteksi, ket, id_anak, id_bidan, petugas) 
               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
     if ($stmt = $koneksi->prepare($query)) {
-        $stmt->bind_param("iisssisss", $id_anak, $orang_tua_no, $bidan_id, $petugas, $tanggal_imunisasi, $usia_anak, $jenis_imunisasi, $vitamin, $keterangan);
+        // Bind parameter dengan tipe data yang sesuai
+        $stmt->bind_param("siidsssis", $tanggal_timbangan, $usia, $berat_badan, $tinggi_badan, $deteksi, $keterangan, $id_anak, $bidan_id, $petugas);
         if ($stmt->execute()) {
             $_SESSION['success'] = "Data berhasil disimpan.";
-            header("Location: kelola-imunisasi.php?pesan=berhasil");
+            header("Location: kelola-penimbangan.php?pesan=berhasil");
+            exit;
         } else {
             $_SESSION['error'] = "Gagal menyimpan data: " . $stmt->error;
-            header("Location: tambah-imunisasi.php");
+            header("Location: tambah-penimbangan.php");
+            exit;
         }
         $stmt->close();
     } else {
         $_SESSION['error'] = "Prepare statement gagal: " . $koneksi->error;
-        header("Location: tambah-imunisasi.php");
+        header("Location: tambah-penimbangan.php");
+        exit;
     }
 }
 

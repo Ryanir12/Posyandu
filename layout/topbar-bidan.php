@@ -88,7 +88,7 @@
         <ul class="navbar-nav">
             <!-- Menu Items -->
             <li class="nav-item">
-                <a class="nav-link" href="../admin/index-admin.php">Home</a>
+                <a class="nav-link" href="../bidan/index-bidan.php">Home</a>
             </li>
 
 
