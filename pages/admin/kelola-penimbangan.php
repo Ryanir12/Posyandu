@@ -75,12 +75,12 @@
                                         <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
                                             <thead>
                                                 <tr>
-                                                    <th>ID Penimbangan</th>
+                                                    <th>ID</th>
                                                     <th>Nama Anak</th>
                                                     <th>Nama Ibu</th>
                                                     <th>Nama Bidan</th>
                                                     <th>Tanggal Penimbangan</th>
-                                                    <th>Usia</th>
+                                                    <th>Usia (Bulan)</th>
                                                     <th>Berat Badan (Kg)</th>
                                                     <th>Tinggi Badan (Cm)</th>
                                                     <th>Deteksi Pertumbuhan</th>
@@ -91,20 +91,20 @@
                                             <tbody>
                                                 <?php while ($row = $result_penimbangan->fetch_assoc()) { ?>
                                                     <tr>
-                                                        <td><?php echo $row['id_penimbangan']; ?></td>
-                                                        <td><?php echo $row['nama_anak']; ?></td>
-                                                        <td><?php echo $row['nama_ibu']; ?></td>
-                                                        <td><?php echo $row['nama_bidan']; ?></td>
-                                                        <td><?php echo $row['tgl_timbangan']; ?></td>
-                                                        <td><?php echo $row['usia']; ?></td>
-                                                        <td><?php echo $row['bb']; ?></td>
-                                                        <td><?php echo $row['tb']; ?></td>
-                                                        <td><?php echo $row['deteksi']; ?></td>
-                                                        <td><?php echo $row['ket']; ?></td>
+                                                        <td><?php echo htmlspecialchars($row['id_penimbangan']); ?></td>
+                                                        <td><?php echo htmlspecialchars($row['nama_anak']); ?></td>
+                                                        <td><?php echo htmlspecialchars($row['nama_ibu']); ?></td>
+                                                        <td><?php echo htmlspecialchars($row['nama_bidan']); ?></td>
+                                                        <td><?php echo htmlspecialchars(date('d-m-Y', strtotime($row['tgl_timbangan']))); ?></td>
+                                                        <td><?php echo htmlspecialchars($row['usia']); ?></td>
+                                                        <td><?php echo htmlspecialchars($row['bb']); ?></td>
+                                                        <td><?php echo htmlspecialchars($row['tb']); ?></td>
+                                                        <td><?php echo htmlspecialchars($row['deteksi']); ?></td>
+                                                        <td><?php echo htmlspecialchars($row['ket']); ?></td>
                                                         <td>
                                                             <div class="btn-group">
-                                                                <a href="ubah-penimbangan.php?id=<?php echo $row['id_penimbangan']; ?>" class="btn btn-success btn-sm">Edit</a>
-                                                                <a href="hapus-penimbangan.php?id=<?php echo $row['id_penimbangan']; ?>" class="btn btn-danger btn-sm" onclick="return confirm('Anda yakin ingin menghapus data ini?');">Hapus</a>
+                                                                <a href="ubah-penimbangan.php?id=<?php echo htmlspecialchars($row['id_penimbangan']); ?>" class="btn btn-success btn-sm">Edit</a>
+                                                                <a href="hapus-penimbangan.php?id=<?php echo htmlspecialchars($row['id_penimbangan']); ?>" class="btn btn-danger btn-sm" onclick="return confirm('Anda yakin ingin menghapus data ini?');">Hapus</a>
                                                             </div>
                                                         </td>
                                                     </tr>

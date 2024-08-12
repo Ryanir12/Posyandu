@@ -1,3 +1,65 @@
+<?php
+session_start();
+
+// Cek apakah pengguna sudah login
+if (!isset($_SESSION['hak_akses']) || empty($_SESSION['hak_akses'])) {
+    header("Location: ../../index.php?pesan=gagal");
+    exit;
+}
+
+include '../../koneksi.php';
+
+// Inisialisasi variabel untuk menampung opsi select
+$anak_options = '';
+$bidan_options = '';
+$error_message = '';
+$petugas_nama = '';
+
+// Mengambil data anak
+$query_anak = "SELECT id, nama_anak, tanggal_lahir, id_ibu FROM anak";
+$result_anak = $koneksi->query($query_anak);
+if ($result_anak) {
+    while ($row = $result_anak->fetch_assoc()) {
+        $anak_options .= "<option value='{$row['id']}' data-tanggal-lahir='{$row['tanggal_lahir']}' data-id-ibu='{$row['id_ibu']}'>{$row['nama_anak']}</option>";
+    }
+} else {
+    $error_message = "Gagal mengambil data anak: " . $koneksi->error;
+}
+
+// Mengambil data bidan
+$query_bidan = "SELECT id_bidan, nama_bidan FROM bidan";
+$result_bidan = $koneksi->query($query_bidan);
+if ($result_bidan) {
+    while ($row = $result_bidan->fetch_assoc()) {
+        $bidan_options .= "<option value='{$row['id_bidan']}'>{$row['nama_bidan']}</option>";
+    }
+} else {
+    $error_message .= "<br>Gagal mengambil data bidan: " . $koneksi->error;
+}
+
+// Mengambil nama petugas berdasarkan username
+$username = $_SESSION['username'];
+$query_petugas = "SELECT nama FROM user WHERE username = ?";
+$stmt = $koneksi->prepare($query_petugas);
+
+if ($stmt === false) {
+    $error_message .= "<br>Gagal menyiapkan statement: " . $koneksi->error;
+} else {
+    $stmt->bind_param('s', $username);
+    $stmt->execute();
+    $result_petugas = $stmt->get_result();
+
+    if ($result_petugas->num_rows > 0) {
+        $row = $result_petugas->fetch_assoc();
+        $petugas_nama = htmlspecialchars($row['nama']);
+    } else {
+        $error_message .= "<br>Nama petugas tidak ditemukan.";
+    }
+
+    $stmt->close();
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -5,25 +67,30 @@
     <?php include '../../layout/header.php'; ?>
     <link rel="stylesheet" href="../../path/to/your/css/style.css">
     <style>
+        /* Gaya umum untuk form dan elemen */
         .form-group {
+            margin-bottom: 15px;
             display: flex;
             align-items: center;
-            margin-bottom: 1rem;
         }
 
         .form-group label {
-            flex: 1;
-            margin-right: 1rem;
+            flex: 0 0 200px;
+            margin-bottom: 5px;
             text-align: right;
+            margin-right: 10px;
         }
 
         .form-group .form-control {
-            flex: 2;
+            text-align: left;
+            /* Rata kiri untuk teks dalam input */
         }
 
         .btn-group {
             display: flex;
             gap: 5px;
+            text-align: left;
+            /* Rata kiri untuk tombol */
         }
 
         .indicator {
@@ -42,38 +109,33 @@
         .indicator.not-active {
             background-color: red;
         }
+
+        .alert {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 0.25rem;
+        }
+
+        .alert-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        /* Mengatur teks dan form input agar rata kiri */
+        input[type="text"],
+        input[type="number"],
+        input[type="date"],
+        textarea {
+            text-align: left;
+            /* Rata kiri untuk teks dalam input dan textarea */
+            width: 100%;
+            /* Memastikan input mengisi lebar kontainer */
+        }
     </style>
 </head>
 
 <body id="page-top">
-
-    <?php
-    session_start();
-
-    if (!isset($_SESSION['hak_akses']) || empty($_SESSION['hak_akses'])) {
-        header("Location: ../../index.php?pesan=gagal");
-        exit;
-    }
-
-    include '../../koneksi.php';
-
-    if ($koneksi->connect_error) {
-        die("Koneksi gagal: " . $koneksi->connect_error);
-    }
-
-    // Get data for select fields
-    $query_anak = "SELECT id, nama_anak, tanggal_lahir FROM anak";
-    $query_orang_tua = "SELECT nama_ibu FROM orang_tua";
-    $query_bidan = "SELECT id_bidan, nama_bidan FROM bidan";
-
-    $result_anak = $koneksi->query($query_anak);
-    $result_orang_tua = $koneksi->query($query_orang_tua);
-    $result_bidan = $koneksi->query($query_bidan);
-
-    if (!$result_anak || !$result_orang_tua || !$result_bidan) {
-        die("Query gagal: " . $koneksi->error);
-    }
-    ?>
 
     <div id="wrapper">
 
@@ -96,55 +158,46 @@
                         <div class="col">
                             <div class="card mb-5">
                                 <div class="card-body">
+                                    <?php if ($error_message): ?>
+                                        <div class="alert alert-danger" role="alert">
+                                            <?php echo htmlspecialchars($error_message); ?>
+                                        </div>
+                                    <?php endif; ?>
+
                                     <form method="post" action="proses-penimbangan.php">
                                         <div class="form-group">
                                             <label for="nama_anak">Nama Anak:</label>
-                                            <select id="nama_anak" name="id_anak" class="form-control" required onchange="updateUsia()">
+                                            <select id="nama_anak" name="id_anak" class="form-control" required onchange="updateNamaIbu()">
                                                 <option value="">Pilih Nama Anak</option>
-                                                <?php while ($row_anak = $result_anak->fetch_assoc()) { ?>
-                                                    <option value="<?php echo htmlspecialchars($row_anak['id']); ?>" data-tanggal-lahir="<?php echo htmlspecialchars($row_anak['tanggal_lahir']); ?>">
-                                                        <?php echo htmlspecialchars($row_anak['nama_anak']); ?>
-                                                    </option>
-                                                <?php } ?>
+                                                <?php echo $anak_options; ?>
                                             </select>
                                         </div>
 
                                         <div class="form-group">
                                             <label for="nama_ibu">Nama Ibu:</label>
-                                            <select id="nama_ibu" name="nama_ibu" class="form-control" required>
-                                                <option value="">Pilih Nama Ibu</option>
-                                                <?php while ($row_orang_tua = $result_orang_tua->fetch_assoc()) { ?>
-                                                    <option value="<?php echo htmlspecialchars($row_orang_tua['nama_ibu']); ?>">
-                                                        <?php echo htmlspecialchars($row_orang_tua['nama_ibu']); ?>
-                                                    </option>
-                                                <?php } ?>
-                                            </select>
+                                            <input type="text" id="nama_ibu" name="nama_ibu" class="form-control" readonly>
                                         </div>
 
                                         <div class="form-group">
                                             <label for="bidan">Nama Bidan:</label>
                                             <select id="bidan" name="bidan" class="form-control" required>
                                                 <option value="">Pilih Nama Bidan</option>
-                                                <?php while ($row_bidan = $result_bidan->fetch_assoc()) { ?>
-                                                    <option value="<?php echo htmlspecialchars($row_bidan['id_bidan']); ?>">
-                                                        <?php echo htmlspecialchars($row_bidan['nama_bidan']); ?>
-                                                    </option>
-                                                <?php } ?>
+                                                <?php echo $bidan_options; ?>
                                             </select>
                                         </div>
 
                                         <div class="form-group">
                                             <label for="petugas">Nama Petugas:</label>
-                                            <input type="text" id="petugas" name="petugas" class="form-control" value="<?php echo htmlspecialchars($_SESSION['username']); ?>" readonly>
+                                            <input type="text" id="petugas" name="petugas" class="form-control" value="<?php echo htmlspecialchars($petugas_nama); ?>" readonly>
                                         </div>
 
                                         <div class="form-group">
                                             <label for="tgl_timbangan">Tanggal Penimbangan:</label>
-                                            <input type="date" id="tgl_timbangan" name="tgl_timbangan" class="form-control" value="<?php echo htmlspecialchars(date('Y-m-d')); ?>" readonly>
+                                            <input type="date" id="tgl_timbangan" name="tgl_timbangan" class="form-control" value="<?php echo htmlspecialchars(date('Y-m-d')); ?>">
                                         </div>
 
                                         <div class="form-group">
-                                            <label for="usia">Usia Anak:</label>
+                                            <label for="usia">Usia Anak (Bulan):</label>
                                             <input type="number" id="usia" name="usia" class="form-control" readonly>
                                         </div>
 
@@ -159,12 +212,17 @@
                                         </div>
 
                                         <div class="form-group">
-                                            <label for="deteksi">Deteksi Pertumbuhan:</label>
-                                            <div id="deteksi">
-                                                <span id="ideal" class="indicator"></span> Ideal
-                                                <span id="not_ideal" class="indicator"></span> Tidak Ideal
+                                            <label>Deteksi Pertumbuhan:</label>
+                                            <div>
+                                                <label>
+                                                    <input type="radio" name="deteksi" value="Ideal" id="radio_ideal" /> Ideal
+                                                </label>
+                                                <label>
+                                                    <input type="radio" name="deteksi" value="Tidak Ideal" id="radio_not_ideal" /> Tidak Ideal
+                                                </label>
                                             </div>
                                         </div>
+
 
                                         <div class="form-group">
                                             <label for="ket">Keterangan:</label>
@@ -200,68 +258,74 @@
                 </div>
             </div>
         </div>
+
     </div>
+    <!-- End of Content Wrapper -->
 
     <?php include '../../layout/footer.php'; ?>
 
-    <!-- Script to handle detection based on input -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const namaAnakSelect = document.getElementById('nama_anak');
+            const namaIbuInput = document.getElementById('nama_ibu');
             const usiaInput = document.getElementById('usia');
             const bbInput = document.getElementById('bb');
             const tbInput = document.getElementById('tb');
             const idealIndicator = document.getElementById('ideal');
             const notIdealIndicator = document.getElementById('not_ideal');
+            const tglTimbanganInput = document.getElementById('tgl_timbangan');
 
-            namaAnakSelect.addEventListener('change', function() {
+            function updateNamaIbu() {
                 const selectedOption = namaAnakSelect.options[namaAnakSelect.selectedIndex];
-                const tanggalLahir = selectedOption.getAttribute('data-tanggal-lahir');
-                if (tanggalLahir) {
-                    const usia = hitungUsia(tanggalLahir);
-                    usiaInput.value = usia;
-                } else {
-                    usiaInput.value = '';
-                }
-            });
+                const idIbu = selectedOption.getAttribute('data-id-ibu');
 
-            function hitungUsia(tanggalLahir) {
-                const today = new Date();
-                const birthDate = new Date(tanggalLahir);
-                let age = today.getFullYear() - birthDate.getFullYear();
-                const m = today.getMonth() - birthDate.getMonth();
-                if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-                    age--;
+                // Fetch Nama Ibu based on id_ibu
+                if (idIbu) {
+                    fetch(`get_nama_ibu.php?id=${idIbu}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            namaIbuInput.value = data.nama_ibu;
+                        })
+                        .catch(error => {
+                            console.error('Error fetching nama ibu:', error);
+                        });
                 }
-                return age;
+
+                // Calculate usia in months
+                const tanggalLahir = new Date(selectedOption.getAttribute('data-tanggal-lahir'));
+                const tglTimbangan = new Date(tglTimbanganInput.value || new Date());
+                const usia = Math.floor((tglTimbangan - tanggalLahir) / (1000 * 60 * 60 * 24 * 30.4375));
+                usiaInput.value = usia;
             }
 
             function updateDeteksi() {
                 const bb = parseFloat(bbInput.value);
                 const tb = parseFloat(tbInput.value);
-                let deteksi = '';
+                const ideal = document.getElementById('radio_ideal').checked;
+                const notIdeal = document.getElementById('radio_not_ideal').checked;
 
-                if (bb > 0 && tb > 0) {
-                    const imt = bb / ((tb / 100) ** 2); // Convert cm to meters
-                    if (imt >= 18.5 && imt <= 24.9) {
-                        deteksi = 'Ideal';
-                        idealIndicator.classList.add('active');
-                        notIdealIndicator.classList.remove('active');
-                    } else {
-                        deteksi = 'Tidak Ideal';
-                        notIdealIndicator.classList.add('active');
-                        idealIndicator.classList.remove('active');
-                    }
+                if (ideal) {
+                    idealIndicator.classList.add('active');
+                    notIdealIndicator.classList.remove('active');
+                } else if (notIdeal) {
+                    idealIndicator.classList.remove('active');
+                    notIdealIndicator.classList.add('active');
                 } else {
                     idealIndicator.classList.remove('active');
                     notIdealIndicator.classList.remove('active');
                 }
             }
 
+            namaAnakSelect.addEventListener('change', updateNamaIbu);
             bbInput.addEventListener('input', updateDeteksi);
             tbInput.addEventListener('input', updateDeteksi);
+            tglTimbanganInput.addEventListener('change', updateNamaIbu);
+            document.querySelectorAll('input[name="deteksi"]').forEach(radio => {
+                radio.addEventListener('change', updateDeteksi);
+            });
         });
     </script>
+
 </body>
 
 </html>

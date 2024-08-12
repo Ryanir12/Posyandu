@@ -78,6 +78,7 @@
                                             <thead>
                                                 <tr>
                                                     <th>ID</th>
+                                                    <th>NIK</th> <!-- Tambahkan kolom NIK -->
                                                     <th>Nama Anak</th>
                                                     <th>Tempat Lahir</th>
                                                     <th>Tanggal Lahir</th>
@@ -86,18 +87,17 @@
                                                     <th>Nama Ibu</th>
                                                     <th>Nama Ayah</th>
                                                     <th>Alamat</th>
-
                                                     <th>Aksi</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 <?php
                                                 $query = "
-                                    SELECT a.id, a.nama_anak, a.tempat_lahir, a.tanggal_lahir, a.jenis_kelamin, a.golongan_darah, 
-                                           o.nama_ibu, o.nama_suami AS nama_ayah, o.alamat, o.no_telpon
-                                    FROM anak a
-                                    LEFT JOIN orang_tua o ON a.orang_tua_id = o.no
-                                ";
+                                                    SELECT a.id, a.nik, a.nama_anak, a.tempat_lahir, a.tanggal_lahir, a.jenis_kelamin, a.golongan_darah, 
+                                                           o.nama_ibu, o.nama_suami AS nama_ayah, o.alamat, o.no_telpon
+                                                    FROM anak a
+                                                    LEFT JOIN orang_tua o ON a.orang_tua_id = o.no
+                                                ";
 
                                                 $result = $koneksi->query($query);
 
@@ -109,23 +109,23 @@
                                                     $id = isset($row['id']) ? $row['id'] : '';
 
                                                     echo "<tr>
-                                        <td>{$id}</td>
-                                        <td>{$row['nama_anak']}</td>
-                                        <td>{$row['tempat_lahir']}</td>
-                                        <td>{$row['tanggal_lahir']}</td>
-                                        <td>{$row['jenis_kelamin']}</td>
-                                        <td>{$row['golongan_darah']}</td>
-                                        <td>{$row['nama_ibu']}</td>
-                                        <td>{$row['nama_ayah']}</td>
-                                        <td>{$row['alamat']}</td>
-                                       
-                                        <td>
-                                            <div class='btn-group'>
-                                                <a href='ubah-anak.php?id={$id}' class='btn btn-success btn-sm'>Edit</a>
-                                                <a href='hapus-anak.php?id={$id}' class='btn btn-danger btn-sm' onclick='return confirm(\"Apakah Anda yakin ingin menghapus data ini?\")'>Delete</a>
-                                            </div>
-                                        </td>
-                                    </tr>";
+                                                        <td>{$id}</td>
+                                                        <td>{$row['nik']}</td> <!-- Menampilkan NIK -->
+                                                        <td>{$row['nama_anak']}</td>
+                                                        <td>{$row['tempat_lahir']}</td>
+                                                        <td>{$row['tanggal_lahir']}</td>
+                                                        <td>{$row['jenis_kelamin']}</td>
+                                                        <td>{$row['golongan_darah']}</td>
+                                                        <td>{$row['nama_ibu']}</td>
+                                                        <td>{$row['nama_ayah']}</td>
+                                                        <td>{$row['alamat']}</td>
+                                                        <td>
+                                                            <div class='btn-group'>
+                                                                <a href='ubah-anak.php?id={$id}' class='btn btn-success btn-sm'>Edit</a>
+                                                                <a href='hapus-anak.php?id={$id}' class='btn btn-danger btn-sm' onclick='return confirm(\"Apakah Anda yakin ingin menghapus data ini?\")'>Delete</a>
+                                                            </div>
+                                                        </td>
+                                                    </tr>";
                                                 }
                                                 ?>
                                             </tbody>

@@ -3,9 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Waktu pembuatan: 10 Agu 2024 pada 13.41
+-- Waktu pembuatan: 12 Agu 2024 pada 21.04
 -- Versi server: 10.4.32-MariaDB
--- Versi PHP: 8.0.30
+-- Versi PHP: 8.2.12
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -29,23 +29,26 @@ SET time_zone = "+00:00";
 
 CREATE TABLE `anak` (
   `id` int(11) NOT NULL,
+  `nik` varchar(20) NOT NULL,
   `nama_anak` varchar(100) DEFAULT NULL,
   `tempat_lahir` varchar(100) DEFAULT NULL,
   `tanggal_lahir` date DEFAULT NULL,
   `orang_tua_id` int(11) DEFAULT NULL,
   `jenis_kelamin` enum('Laki-Laki','Perempuan') NOT NULL,
-  `golongan_darah` varchar(10) DEFAULT NULL
+  `golongan_darah` varchar(10) DEFAULT NULL,
+  `id_ibu` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data untuk tabel `anak`
 --
 
-INSERT INTO `anak` (`id`, `nama_anak`, `tempat_lahir`, `tanggal_lahir`, `orang_tua_id`, `jenis_kelamin`, `golongan_darah`) VALUES
-(7, 'Ujang', 'Padang', '2002-12-12', 1, 'Laki-Laki', 'A'),
-(8, 'Siti', 'Padang', '1920-11-11', 1, 'Perempuan', 'B'),
-(13, 'selvi', 'solok', '2024-01-07', 20, 'Perempuan', 'A'),
-(14, 'Rima', 'Lampung', '2005-01-29', 22, 'Perempuan', 'B');
+INSERT INTO `anak` (`id`, `nik`, `nama_anak`, `tempat_lahir`, `tanggal_lahir`, `orang_tua_id`, `jenis_kelamin`, `golongan_darah`, `id_ibu`) VALUES
+(19, '1234567890123456', 'Budi', 'Jakarta', '2015-05-15', 1, 'Laki-Laki', 'O', 1),
+(20, '1234567890123457', 'Siti', 'Bandung', '2018-08-21', 2, 'Perempuan', 'A', 2),
+(21, '1234567890123458', 'Carmen', 'Lampung', '2024-03-10', 3, 'Perempuan', 'O', 3),
+(22, '2132121421', 'afwa', 'solok', '1422-02-13', 2, 'Laki-Laki', 'AB', 2),
+(24, 'sadasda', 'sadadsada', 'sadasdsa', '1343-02-12', 1, 'Laki-Laki', 'AB', 1);
 
 -- --------------------------------------------------------
 
@@ -87,8 +90,8 @@ CREATE TABLE `kelola_imunisasi` (
   `petugas` varchar(100) NOT NULL,
   `tanggal_imunisasi` date NOT NULL,
   `usia_anak` int(11) NOT NULL,
-  `jenis_imunisasi` varchar(255) NOT NULL,
-  `vitamin` varchar(255) DEFAULT NULL,
+  `jenis_imunisasi` enum('HB','Polio','Campak','DPT','BCG') NOT NULL,
+  `vitamin` enum('merah','biru') DEFAULT NULL,
   `keterangan` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -97,10 +100,7 @@ CREATE TABLE `kelola_imunisasi` (
 --
 
 INSERT INTO `kelola_imunisasi` (`id`, `anak_id`, `orang_tua_no`, `bidan_id`, `petugas`, `tanggal_imunisasi`, `usia_anak`, `jenis_imunisasi`, `vitamin`, `keterangan`) VALUES
-(2, 7, 1, 4, 'admin', '2024-08-08', 22, 'ya begitulah', 'biru', 'amaan'),
-(6, 13, 20, 5, 'admin', '2024-08-08', 0, 'dsadsa', 'dassa', 'asdsa'),
-(7, 8, 1, 3, 'admin', '2024-08-10', 104, 'adssa', 'sdasa', 'dsadsa'),
-(8, 14, 22, 4, 'admin', '2024-08-10', 19, 'saddsa', 'dassa', 'asdasf');
+(17, 21, 3, 3, 'Selvi', '2024-09-12', 6, 'HB', 'biru', 'mantap');
 
 -- --------------------------------------------------------
 
@@ -132,9 +132,9 @@ CREATE TABLE `orang_tua` (
 --
 
 INSERT INTO `orang_tua` (`no`, `nama_ibu`, `tempat_lahir_ibu`, `tanggal_lahir_ibu`, `golongan_darah_ibu`, `pendidikan_ibu`, `pekerjaan_ibu`, `alamat`, `kota`, `kecamatan`, `nama_suami`, `tempat_lahir_suami`, `tanggal_lahir_suami`, `pendidikan_suami`, `pekerjaan_suami`, `no_telpon`) VALUES
-(1, 'Siti Aminah', 'Jakarta', '1985-06-15', 'O', 'S1', 'Ibu Rumah Tangga', 'Jl. Mawar No. 10', 'Jakarta', 'Kebon Jeruk', 'Ahmad Supardi', 'Bandung', '1980-09-12', 'S2', 'Pegawai Negeri', '081234567890'),
-(20, 'adek', 'solok', '2002-05-14', 'B', 'SMA', 'Rumah Tangga', 'solok', 'solok', 'solok', 'rizal', 'pasaman', '2002-05-31', 'SMA', 'pengangguran', '0972948745'),
-(22, 'Carmila', 'pringsewu', '1998-12-12', 'O', 'SMA', 'Ibu Rumah Tangga', 'Lampung', 'Lampung', 'Sidoharjo', 'Tugiono', 'Lampung', '1987-02-12', 'SMA', 'Swasta', '923711235');
+(1, 'Siti Aminah', 'Jakarta', '1985-06-15', 'O', 'S1', 'Ibu Rumah Tangga', 'Jl. Mawar No. 10', 'Jakarta', 'Kebon Jeruk', 'Ahmad Supardi', 'Bandung', '1980-09-12', 'S2', 'Pegawai Negeri', '081234567891'),
+(2, 'Ade', 'Solok', '2002-05-14', 'B', 'SMA', 'Rumah Tangga', 'Jl. Bunga No. 12', 'Solok', 'Solok', 'Rizal', 'Pasaman', '2002-05-31', 'SMA', 'Pengangguran', '0972948746'),
+(3, 'Carmila', 'Pringsewu', '1998-12-12', 'O', 'SMA', 'Ibu Rumah Tangga', 'Lampung', 'Lampung', 'Sidoharjo', 'Tugiono', 'Lampung', '1987-02-12', 'SMA', 'Swasta', '923711236');
 
 -- --------------------------------------------------------
 
@@ -151,18 +151,16 @@ CREATE TABLE `penimbangan` (
   `deteksi` enum('Ideal','Tidak Ideal') NOT NULL,
   `ket` text DEFAULT NULL,
   `id_anak` int(11) NOT NULL,
-  `id_bidan` int(11) NOT NULL
+  `id_bidan` int(11) NOT NULL,
+  `petugas` varchar(100) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data untuk tabel `penimbangan`
 --
 
-INSERT INTO `penimbangan` (`id_penimbangan`, `tgl_timbangan`, `usia`, `bb`, `tb`, `deteksi`, `ket`, `id_anak`, `id_bidan`) VALUES
-(1, '2024-08-07', 21, 55, 150, 'Ideal', 'Pertumbuhan normal.', 7, 1),
-(2, '2024-08-07', 104, 45, 140, 'Ideal', 'Pertumbuhan normal.', 8, 2),
-(4, '2024-08-10', 0, 34, 12, 'Tidak Ideal', 'asfa ', 13, 4),
-(6, '2024-08-10', 19, 60, 160, 'Ideal', 'mantap', 14, 4);
+INSERT INTO `penimbangan` (`id_penimbangan`, `tgl_timbangan`, `usia`, `bb`, `tb`, `deteksi`, `ket`, `id_anak`, `id_bidan`, `petugas`) VALUES
+(20, '2024-09-12', 6, 25, 100, 'Ideal', 'bagus', 21, 3, 'Selvi');
 
 -- --------------------------------------------------------
 
@@ -198,7 +196,7 @@ INSERT INTO `user` (`id_user`, `nama`, `username`, `password`, `email`, `hak_aks
 --
 ALTER TABLE `anak`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `orang_tua_id` (`orang_tua_id`);
+  ADD KEY `fk_orang_tua` (`orang_tua_id`);
 
 --
 -- Indeks untuk tabel `bidan`
@@ -246,7 +244,7 @@ ALTER TABLE `user`
 -- AUTO_INCREMENT untuk tabel `anak`
 --
 ALTER TABLE `anak`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
 
 --
 -- AUTO_INCREMENT untuk tabel `bidan`
@@ -258,19 +256,19 @@ ALTER TABLE `bidan`
 -- AUTO_INCREMENT untuk tabel `kelola_imunisasi`
 --
 ALTER TABLE `kelola_imunisasi`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
 
 --
 -- AUTO_INCREMENT untuk tabel `orang_tua`
 --
 ALTER TABLE `orang_tua`
-  MODIFY `no` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
+  MODIFY `no` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=35;
 
 --
 -- AUTO_INCREMENT untuk tabel `penimbangan`
 --
 ALTER TABLE `penimbangan`
-  MODIFY `id_penimbangan` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id_penimbangan` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
 
 --
 -- AUTO_INCREMENT untuk tabel `user`
@@ -286,7 +284,8 @@ ALTER TABLE `user`
 -- Ketidakleluasaan untuk tabel `anak`
 --
 ALTER TABLE `anak`
-  ADD CONSTRAINT `anak_ibfk_1` FOREIGN KEY (`orang_tua_id`) REFERENCES `orang_tua` (`no`) ON DELETE SET NULL ON UPDATE CASCADE;
+  ADD CONSTRAINT `anak_ibfk_1` FOREIGN KEY (`orang_tua_id`) REFERENCES `orang_tua` (`no`) ON DELETE SET NULL ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_orang_tua` FOREIGN KEY (`orang_tua_id`) REFERENCES `orang_tua` (`no`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Ketidakleluasaan untuk tabel `kelola_imunisasi`

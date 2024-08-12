@@ -108,8 +108,6 @@
                         Laporan
                     </a>
                     <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                        <li><a class="dropdown-item" href="laporan-imunisasi.php">Laporan Imunisasi</a></li>
-                        <li><a class="dropdown-item" href="laporan-penimbangan.php">Laporan Penimbangan</a></li>
                         <li><a class="dropdown-item" href="laporan-posyandu-peranak.php">Laporan Posyandu/anak</a></li>
                         <li><a class="dropdown-item" href="laporan-posyandu-perbulan.php">Laporan Hasil Posyandu</a></li>
                         <li><a class="dropdown-item" href="laporan-posyandu-pertahun.php">Laporan Rekapitulasi Posyandu</a></li>

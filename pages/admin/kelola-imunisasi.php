@@ -81,7 +81,7 @@
                                 <table class="table table-hover table-bordered" id="Table">
                                     <thead>
                                         <tr>
-                                            <th>ID Imunisasi</th>
+                                            <th>ID</th>
                                             <th>Nama Anak</th>
                                             <th>Nama Ibu</th>
                                             <th>Nama Bidan</th>

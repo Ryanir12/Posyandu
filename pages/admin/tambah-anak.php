@@ -96,6 +96,7 @@
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Ambil data dari form
+        $nik = $_POST['nik'];
         $nama_anak = $_POST['nama_anak'];
         $tempat_lahir = $_POST['tempat_lahir'];
         $tanggal_lahir = $_POST['tanggal_lahir'];
@@ -103,8 +104,19 @@
         $golongan_darah = $_POST['golongan_darah'];
         $orang_tua_id = $_POST['orang_tua_id'];
 
+        // Ambil id_ibu berdasarkan orang_tua_id yang dipilih
+        $query_id_ibu = "SELECT no FROM orang_tua WHERE no = ?";
+        $stmt_id_ibu = $koneksi->prepare($query_id_ibu);
+        $stmt_id_ibu->bind_param("i", $orang_tua_id);
+        $stmt_id_ibu->execute();
+        $stmt_id_ibu->bind_result($id_ibu);
+        $stmt_id_ibu->fetch();
+        $stmt_id_ibu->close();
+
         // Validasi data
-        if ($jenis_kelamin !== 'Laki-Laki' && $jenis_kelamin !== 'Perempuan') {
+        if (empty($nik)) {
+            $error_message = 'NIK tidak boleh kosong.';
+        } elseif ($jenis_kelamin !== 'Laki-Laki' && $jenis_kelamin !== 'Perempuan') {
             $error_message = 'Pilih jenis kelamin yang valid.';
         } elseif ($golongan_darah === 'Pilih') {
             $golongan_darah = ''; // Kosongkan jika tidak dipilih
@@ -112,14 +124,17 @@
             $error_message = 'Pilih orang tua yang valid.';
         } else {
             // Query untuk menambahkan data anak
-            $query = "INSERT INTO anak (nama_anak, tempat_lahir, tanggal_lahir, jenis_kelamin, golongan_darah, orang_tua_id) 
-                      VALUES ('$nama_anak', '$tempat_lahir', '$tanggal_lahir', '$jenis_kelamin', '$golongan_darah', '$orang_tua_id')";
+            $query = "INSERT INTO anak (nik, nama_anak, tempat_lahir, tanggal_lahir, jenis_kelamin, golongan_darah, orang_tua_id, id_ibu) 
+                      VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
-            if ($koneksi->query($query) === TRUE) {
+            $stmt = $koneksi->prepare($query);
+            $stmt->bind_param("ssssssii", $nik, $nama_anak, $tempat_lahir, $tanggal_lahir, $jenis_kelamin, $golongan_darah, $orang_tua_id, $id_ibu);
+
+            if ($stmt->execute()) {
                 header("Location: kelola-anak.php?pesan=berhasil");
                 exit;
             } else {
-                $error_message = "Error: " . $query . "<br>" . $koneksi->error;
+                $error_message = "Error: " . $stmt->error;
             }
         }
     }
@@ -139,6 +154,10 @@
                         <div class="alert alert-danger"><?php echo $error_message; ?></div>
                     <?php endif; ?>
                     <form action="" method="POST">
+                        <div class="form-group">
+                            <label for="nik">NIK</label>
+                            <input type="text" class="form-control" id="nik" name="nik" required>
+                        </div>
                         <div class="form-group">
                             <label for="nama_anak">Nama Anak</label>
                             <input type="text" class="form-control" id="nama_anak" name="nama_anak" required>

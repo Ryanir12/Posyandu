@@ -4,6 +4,7 @@
 <head>
     <?php include '../../layout/header.php'; ?>
     <link rel="stylesheet" href="../../path/to/your/css/style.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
         .btn-tambah,
         .btn-cetak {
@@ -64,7 +65,8 @@
                 visibility: visible;
             }
 
-            .btn-cetak {
+            .btn-cetak,
+            .no-print {
                 display: none;
             }
         }
@@ -87,17 +89,40 @@
         die("Koneksi gagal: " . $koneksi->connect_error);
     }
 
-    // Handle year filter if form is submitted
-    $year = isset($_GET['year']) ? intval($_GET['year']) : date('Y');
+    // Handle filter if form is submitted
+    $filter = isset($_GET['filter']) ? $_GET['filter'] : 'tahunan';
+    $tanggal = isset($_GET['tanggal']) ? $_GET['tanggal'] : date('Y-m-d');
+    $bulan = isset($_GET['bulan']) ? $_GET['bulan'] : date('m');
+    $tahun = isset($_GET['tahun']) ? $_GET['tahun'] : date('Y');
 
-    // Query to fetch penimbangan data for the selected year
-    $query_penimbangan = "SELECT p.id_penimbangan, p.tgl_timbangan, p.usia, p.bb, p.tb, p.deteksi, p.ket, 
-        a.nama_anak, o.nama_ibu, b.nama_bidan 
-        FROM penimbangan p 
-        JOIN anak a ON p.id_anak = a.id 
-        JOIN orang_tua o ON a.orang_tua_id = o.no 
-        JOIN bidan b ON p.id_bidan = b.id_bidan
-        WHERE YEAR(p.tgl_timbangan) = ?";
+    $query_penimbangan = "SELECT p.id_penimbangan, p.tgl_timbangan, p.usia, p.bb, p.tb, p.deteksi, p.ket,
+       a.nik, a.jenis_kelamin, a.nama_anak, o.nama_ibu, b.nama_bidan, p.petugas
+FROM penimbangan p
+JOIN anak a ON p.id_anak = a.id
+JOIN orang_tua o ON a.orang_tua_id = o.no
+JOIN bidan b ON p.id_bidan = b.id_bidan
+WHERE 1=1
+";
+
+
+    $params = [];
+    $types = "";
+
+    // Filter query based on selected filter
+    if ($filter == 'harian') {
+        $query_penimbangan .= " AND p.tgl_timbangan = ?";
+        $params[] = $tanggal;
+        $types .= "s";
+    } elseif ($filter == 'bulanan') {
+        $query_penimbangan .= " AND MONTH(p.tgl_timbangan) = ? AND YEAR(p.tgl_timbangan) = ?";
+        $params[] = $bulan;
+        $params[] = $tahun;
+        $types .= "ii";
+    } elseif ($filter == 'tahunan') {
+        $query_penimbangan .= " AND YEAR(p.tgl_timbangan) = ?";
+        $params[] = $tahun;
+        $types .= "i";
+    }
 
     $stmt = $koneksi->prepare($query_penimbangan);
 
@@ -105,7 +130,10 @@
         die("Error preparing statement: " . $koneksi->error);
     }
 
-    $stmt->bind_param("i", $year);
+    if (!empty($params)) {
+        $stmt->bind_param($types, ...$params);
+    }
+
     $stmt->execute();
     $result_penimbangan = $stmt->get_result();
 
@@ -114,31 +142,53 @@
     }
     ?>
 
-    <?php include '../../layout/topbar-admin.php'; ?>
+    <div class="no-print">
+        <?php include '../../layout/topbar-admin.php'; ?>
+    </div>
 
     <div class="container-fluid">
-        <!-- Form filter tahun -->
-        <form method="get" class="mb-4">
+        <!-- Form filter -->
+        <form method="GET" class="mb-4 no-print">
             <div class="form-group">
-                <label for="year">Pilih Tahun:</label>
-                <select id="year" name="year" class="form-control" onchange="this.form.submit()">
-                    <?php
-                    // Generate year options dynamically
-                    $currentYear = date('Y');
-                    for ($i = $currentYear; $i >= 2000; $i--) {
-                        $selected = ($i == $year) ? 'selected' : '';
-                        echo "<option value=\"$i\" $selected>$i</option>";
-                    }
-                    ?>
+                <label for="filter">Filter Berdasarkan:</label>
+                <select id="filter" name="filter" class="form-control" onchange="this.form.submit()">
+                    <option value="tahunan" <?php echo ($filter == 'tahunan') ? 'selected' : ''; ?>>Tahunan</option>
+                    <option value="bulanan" <?php echo ($filter == 'bulanan') ? 'selected' : ''; ?>>Bulanan</option>
+                    <option value="harian" <?php echo ($filter == 'harian') ? 'selected' : ''; ?>>Harian</option>
                 </select>
             </div>
+
+            <?php if ($filter == 'harian'): ?>
+                <div class="form-group">
+                    <label for="tanggal">Pilih Tanggal:</label>
+                    <input type="date" id="tanggal" name="tanggal" class="form-control" value="<?php echo htmlspecialchars($tanggal); ?>" onchange="this.form.submit()">
+                </div>
+            <?php elseif ($filter == 'bulanan'): ?>
+                <div class="form-group">
+                    <label for="bulan">Pilih Bulan:</label>
+                    <input type="month" id="bulan" name="bulan" class="form-control" value="<?php echo htmlspecialchars($tahun . '-' . $bulan); ?>" onchange="this.form.submit()">
+                </div>
+            <?php elseif ($filter == 'tahunan'): ?>
+                <div class="form-group">
+                    <label for="tahun">Pilih Tahun:</label>
+                    <select id="tahun" name="tahun" class="form-control" onchange="this.form.submit()">
+                        <?php
+                        $currentYear = date('Y');
+                        for ($i = $currentYear; $i >= 2000; $i--) {
+                            $selected = ($i == $tahun) ? 'selected' : '';
+                            echo "<option value=\"$i\" $selected>$i</option>";
+                        }
+                        ?>
+                    </select>
+                </div>
+            <?php endif; ?>
         </form>
 
-        <button class="btn btn-success btn-cetak" onclick="window.print()">Cetak Laporan</button>
+        <button class="btn btn-success btn-cetak no-print" onclick="window.print()">Cetak Laporan</button>
         <br>
         <br>
         <div class="d-sm-flex align-items-center justify-content-between mb-4">
-            <h1 class="h3 mb-0 text-gray-800">Laporan Penimbangan</h1>
+            <h1 class="h3 mb-0 text-gray-800 no-print">Laporan Penimbangan</h1>
         </div>
 
         <div class="card mb-5">
@@ -151,76 +201,58 @@
                     <h2 class="text-center">Puskesmas Paninggahan</h2>
                     <h2 class="text-center">Jl. Tabing Biduk, Nagari Panginggahan, Kec. Junjung SIrih</h2>
                     <hr>
-                    <h5 class="text-center">Laporan Penimbangan Tahun <?php echo htmlspecialchars($year); ?></h5>
+                    <h5 class="text-center">Laporan Penimbangan <?php echo ucfirst($filter); ?> <?php echo ($filter == 'harian') ? htmlspecialchars(date('d F Y', strtotime($tanggal))) : (($filter == 'bulanan') ? htmlspecialchars(date('F Y', strtotime($tahun . '-' . $bulan . '-01'))) : htmlspecialchars($tahun)); ?></h5>
 
                     <div class="table-responsive-lg" style="overflow-x: auto;">
 
                         <table class="table table-hover table-bordered" id="Table">
                             <thead>
                                 <tr>
-                                    <th>ID Penimbangan</th>
-                                    <th>Tanggal Penimbangan</th>
+                                    <th>No</th>
+                                    <th>NIK</th>
                                     <th>Nama Anak</th>
                                     <th>Nama Ibu</th>
-                                    <th>Nama Bidan</th>
-                                    <th>Usia Anak</th>
+                                    <th>Jenis Kelamin</th>
+                                    <th>Umur(Bulan)</th>
                                     <th>Berat Badan (Kg)</th>
                                     <th>Tinggi Badan (Cm)</th>
-                                    <th>Deteksi Pertumbuhan</th>
-                                    <th>Keterangan</th>
+                                    <th>Nama Bidan</th>
+                                    <th>Nama Petugas</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <?php
                                 if ($result_penimbangan->num_rows > 0) {
+                                    $no = 1;
                                     while ($row = $result_penimbangan->fetch_assoc()) {
                                         echo "<tr>
-                                                        <td>" . htmlspecialchars($row['id_penimbangan']) . "</td>
-                                                        <td>" . htmlspecialchars($row['tgl_timbangan']) . "</td>
-                                                        <td>" . htmlspecialchars($row['nama_anak']) . "</td>
-                                                        <td>" . htmlspecialchars($row['nama_ibu']) . "</td>
-                                                        <td>" . htmlspecialchars($row['nama_bidan']) . "</td>
-                                                        <td>" . htmlspecialchars($row['usia']) . "</td>
-                                                        <td>" . htmlspecialchars($row['bb']) . "</td>
-                                                        <td>" . htmlspecialchars($row['tb']) . "</td>
-                                                        <td>" . htmlspecialchars($row['deteksi']) . "</td>
-                                                        <td>" . htmlspecialchars($row['ket']) . "</td>
-                                                    </tr>";
+                                                <td>" . htmlspecialchars($no++) . "</td>
+                                                <td>" . htmlspecialchars($row['nik']) . "</td>
+                                                <td>" . htmlspecialchars($row['nama_anak']) . "</td>
+                                                <td>" . htmlspecialchars($row['nama_ibu']) . "</td>
+                                                <td>" . htmlspecialchars($row['jenis_kelamin']) . "</td>
+                                                <td>" . htmlspecialchars($row['usia']) . "</td>
+                                                <td>" . htmlspecialchars($row['bb']) . "</td>
+                                                <td>" . htmlspecialchars($row['tb']) . "</td>
+                                                <td>" . htmlspecialchars($row['nama_bidan']) . "</td>
+                                                <td>" . htmlspecialchars($row['petugas']) . "</td>
+                                            </tr>";
                                     }
                                 } else {
-                                    echo "<tr><td colspan='10'>Tidak ada data tersedia</td></tr>";
+                                    echo "<tr><td colspan='10'>Tidak ada data</td></tr>";
                                 }
                                 ?>
                             </tbody>
                         </table>
                     </div>
                 </div>
-                <!-- Akhir dari container khusus untuk pencetakan -->
-            </div>
-        </div>
-    </div>
-
-    <!-- Logout Modal-->
-    <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModalLabel">Ready to Leave?</h5>
-                    <button class="close" type="button" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">×</span>
-                    </button>
-                </div>
-                <div class="modal-body">Select "Logout" below if you are ready to end your current session.</div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancel</button>
-                    <a class="btn btn-primary" href="../../logout.php">Logout</a>
-                </div>
             </div>
         </div>
     </div>
 
     <?php include '../../layout/footer.php'; ?>
-    <script src="../../path/to/your/js/script.js"></script>
+
+
 </body>
 
 </html>

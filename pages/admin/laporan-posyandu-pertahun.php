@@ -1,3 +1,59 @@
+<?php
+session_start();
+
+if (!isset($_SESSION['hak_akses']) || $_SESSION['hak_akses'] == "") {
+    header("location:../../index.php?pesan=gagal");
+    exit;
+}
+
+include '../../koneksi.php';
+
+if ($koneksi->connect_error) {
+    die("Koneksi gagal: " . $koneksi->connect_error);
+}
+
+// Mendapatkan bulan dan tahun dari parameter GET atau default ke bulan dan tahun saat ini
+$bulan = isset($_GET['bulan']) ? intval($_GET['bulan']) : date('m');
+$tahun = isset($_GET['tahun']) ? intval($_GET['tahun']) : date('Y');
+
+// Query untuk mengambil data berdasarkan bulan dan tahun
+$query_count = "
+SELECT
+    MONTH(k.tanggal_imunisasi) AS bulan,
+    SUM(CASE WHEN a.jenis_kelamin = 'Laki-laki' THEN 1 ELSE 0 END) AS jumlah_laki,
+    SUM(CASE WHEN a.jenis_kelamin = 'Perempuan' THEN 1 ELSE 0 END) AS jumlah_perempuan,
+    SUM(CASE WHEN k.vitamin = 'Merah' THEN 1 ELSE 0 END) AS jumlah_merah,
+    SUM(CASE WHEN k.vitamin = 'Biru' THEN 1 ELSE 0 END) AS jumlah_biru,
+    SUM(CASE WHEN k.jenis_imunisasi = 'HB' THEN 1 ELSE 0 END) AS jumlah_hb,
+    SUM(CASE WHEN k.jenis_imunisasi = 'DPT' THEN 1 ELSE 0 END) AS jumlah_dpt,
+    SUM(CASE WHEN k.jenis_imunisasi = 'Campak' THEN 1 ELSE 0 END) AS jumlah_campak,
+    SUM(CASE WHEN k.jenis_imunisasi = 'Polio' THEN 1 ELSE 0 END) AS jumlah_polio,
+    SUM(CASE WHEN k.jenis_imunisasi = 'BCG' THEN 1 ELSE 0 END) AS jumlah_bcg
+FROM kelola_imunisasi k
+LEFT JOIN anak a ON k.anak_id = a.id
+WHERE YEAR(k.tanggal_imunisasi) = ?
+GROUP BY bulan
+";
+
+$stmt_count = $koneksi->prepare($query_count);
+$stmt_count->bind_param("i", $tahun);
+$stmt_count->execute();
+$result_count = $stmt_count->get_result();
+
+$totals = [
+    'jumlah_laki' => 0,
+    'jumlah_perempuan' => 0,
+    'jumlah_merah' => 0,
+    'jumlah_biru' => 0,
+    'jumlah_hb' => 0,
+    'jumlah_polio' => 0,
+    'jumlah_bcg' => 0,
+    'jumlah_dpt' => 0,
+    'jumlah_campak' => 0
+];
+
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -23,11 +79,7 @@
         .table th {
             border: 1px solid #000;
             padding: 5px;
-        }
-
-        .btn-group {
-            display: flex;
-            gap: 5px;
+            text-align: center;
         }
 
         .print-btn {
@@ -59,133 +111,102 @@
 </head>
 
 <body id="page-top">
-    <?php
-    session_start();
-
-    if (!isset($_SESSION['hak_akses']) || $_SESSION['hak_akses'] == "") {
-        header("location:../../index.php?pesan=gagal");
-        exit;
-    }
-
-    include '../../koneksi.php';
-
-    if ($koneksi->connect_error) {
-        die("Koneksi gagal: " . $koneksi->connect_error);
-    }
-
-    // Mendapatkan tahun dari parameter GET atau default ke tahun saat ini
-    $tahun = isset($_GET['tahun']) ? intval($_GET['tahun']) : date('Y');
-
-    // Query untuk mengambil data berdasarkan tahun
-    $query_imunisasi = "SELECT a.nama_anak, k.tanggal_imunisasi, k.usia_anak, k.jenis_imunisasi, k.vitamin, p.bb AS berat_badan, p.tb AS tinggi_badan
-                        FROM kelola_imunisasi k
-                        LEFT JOIN anak a ON k.anak_id = a.id
-                        LEFT JOIN penimbangan p ON k.anak_id = p.id_anak
-                        WHERE YEAR(k.tanggal_imunisasi) = ?
-                        ORDER BY k.tanggal_imunisasi";
-    $stmt_imunisasi = $koneksi->prepare($query_imunisasi);
-
-    if (!$stmt_imunisasi) {
-        die("Error preparing statement: " . $koneksi->error);
-    }
-
-    $stmt_imunisasi->bind_param("i", $tahun);
-    $stmt_imunisasi->execute();
-    $result_imunisasi = $stmt_imunisasi->get_result();
-
-    if (!$result_imunisasi) {
-        die("Query gagal: " . $koneksi->error);
-    }
-    ?>
-
     <?php include '../../layout/topbar-admin.php'; ?>
-
     <div class="container-fluid">
-        <!-- Form filter tahun -->
         <form method="get" class="mb-4">
             <div class="form-group">
                 <label for="tahun">Tahun:</label>
-                <input type="number" id="tahun" name="tahun" class="form-control" value="<?php echo $tahun; ?>" min="2000" max="<?php echo date('Y'); ?>">
+                <input type="number" id="tahun" name="tahun" class="form-control" value="<?php echo htmlspecialchars($tahun); ?>" min="2000" max="<?php echo date('Y'); ?>">
             </div>
             <button type="submit" class="btn btn-primary">Tampilkan</button>
         </form>
-
         <button class="btn btn-success btn-cetak" onclick="window.print()">Cetak Laporan</button>
-        <br>
-        <br>
         <div class="d-sm-flex align-items-center justify-content-between mb-4">
-            <h1 class="h3 mb-0 text-gray-800">Laporan Imunisasi Anak Tahun <?php echo htmlspecialchars($tahun); ?></h1>
+            <h1 class="h3 mb-0 text-gray-800">Laporan Imunisasi Anak <?php echo htmlspecialchars($tahun); ?></h1>
         </div>
-
         <div class="card mb-5">
             <div class="card-body">
-                <!-- Container khusus untuk pencetakan -->
                 <div class="print-container">
                     <h2 class="text-center">Posyandu Lapau Kasik Subarang</h2>
                     <h2 class="text-center">Puskesmas Paninggahan</h2>
                     <h2 class="text-center">Jl. Tabing Biduk, Nagari Panginggahan, Kec. Junjung SIrih</h2>
                     <hr>
-                    <h5 class="text-center">Laporan Imunisasi Anak Tahun <?php echo htmlspecialchars($tahun); ?></h5>
-
+                    <h5 class="text-center">Rekapitulasi Data Pelaksanaan Posyandu Tahun <?php echo htmlspecialchars($tahun); ?></h5>
                     <div class="table-responsive-lg" style="overflow-x: auto;">
-                        <table class="table table-hover table-bordered" id="Table">
+                        <table class="table table-hover table-bordered">
                             <thead>
                                 <tr>
-                                    <th>Nama Anak</th>
-                                    <th>Tanggal Imunisasi</th>
-                                    <th>Usia Anak</th>
-                                    <th>Jenis Imunisasi</th>
-                                    <th>Vitamin</th>
-                                    <th>Berat Badan (kg)</th>
-                                    <th>Tinggi Badan (cm)</th>
+                                    <th>No</th>
+                                    <th>Bulan</th>
+                                    <th colspan="2">Jumlah Anak</th>
+                                    <th colspan="5">Imunisasi</th>
+                                    <th colspan="2">Vitamin</th>
+                                </tr>
+                                <tr>
+                                    <th></th>
+                                    <th></th>
+                                    <th>Laki-laki</th>
+                                    <th>Perempuan</th>
+                                    <th>HB</th>
+                                    <th>Polio</th>
+                                    <th>BCG</th>
+                                    <th>DPT</th>
+                                    <th>Campak</th>
+                                    <th>Merah</th>
+                                    <th>Biru</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <?php
-                                if ($result_imunisasi->num_rows > 0) {
-                                    while ($row = $result_imunisasi->fetch_assoc()) {
-                                        echo "<tr>
-                                                    <td>" . htmlspecialchars($row['nama_anak']) . "</td>
-                                                    <td>" . htmlspecialchars($row['tanggal_imunisasi']) . "</td>
-                                                    <td>" . htmlspecialchars($row['usia_anak']) . "</td>
-                                                    <td>" . htmlspecialchars($row['jenis_imunisasi']) . "</td>
-                                                    <td>" . htmlspecialchars($row['vitamin']) . "</td>
-                                                    <td>" . htmlspecialchars($row['berat_badan']) . "</td>
-                                                    <td>" . htmlspecialchars($row['tinggi_badan']) . "</td>
-                                                </tr>";
-                                    }
-                                } else {
-                                    echo "<tr><td colspan='7'>Tidak ada data imunisasi tersedia untuk tahun ini</td></tr>";
+                                $no = 1;
+                                while ($data_count = $result_count->fetch_assoc()) {
+                                    echo '<tr>';
+                                    echo '<td>' . $no++ . '</td>';
+                                    echo '<td>' . date('F', mktime(0, 0, 0, $data_count['bulan'], 10)) . '</td>';
+                                    echo '<td>' . htmlspecialchars($data_count['jumlah_laki']) . '</td>';
+                                    echo '<td>' . htmlspecialchars($data_count['jumlah_perempuan']) . '</td>';
+                                    echo '<td>' . htmlspecialchars($data_count['jumlah_hb']) . '</td>';
+                                    echo '<td>' . htmlspecialchars($data_count['jumlah_polio']) . '</td>';
+                                    echo '<td>' . htmlspecialchars($data_count['jumlah_bcg']) . '</td>';
+                                    echo '<td>' . htmlspecialchars($data_count['jumlah_dpt']) . '</td>';
+                                    echo '<td>' . htmlspecialchars($data_count['jumlah_campak']) . '</td>';
+                                    echo '<td>' . htmlspecialchars($data_count['jumlah_merah']) . '</td>';
+                                    echo '<td>' . htmlspecialchars($data_count['jumlah_biru']) . '</td>';
+                                    echo '</tr>';
+
+                                    // Accumulate totals
+                                    $totals['jumlah_laki'] += $data_count['jumlah_laki'];
+                                    $totals['jumlah_perempuan'] += $data_count['jumlah_perempuan'];
+                                    $totals['jumlah_merah'] += $data_count['jumlah_merah'];
+                                    $totals['jumlah_biru'] += $data_count['jumlah_biru'];
+                                    $totals['jumlah_hb'] += $data_count['jumlah_hb'];
+                                    $totals['jumlah_polio'] += $data_count['jumlah_polio'];
+                                    $totals['jumlah_bcg'] += $data_count['jumlah_bcg'];
+                                    $totals['jumlah_dpt'] += $data_count['jumlah_dpt'];
+                                    $totals['jumlah_campak'] += $data_count['jumlah_campak'];
                                 }
                                 ?>
                             </tbody>
+                            <tfoot>
+                                <tr>
+                                    <th colspan="2">Total</th>
+                                    <td><?php echo htmlspecialchars($totals['jumlah_laki']); ?></td>
+                                    <td><?php echo htmlspecialchars($totals['jumlah_perempuan']); ?></td>
+                                    <td><?php echo htmlspecialchars($totals['jumlah_hb']); ?></td>
+                                    <td><?php echo htmlspecialchars($totals['jumlah_polio']); ?></td>
+                                    <td><?php echo htmlspecialchars($totals['jumlah_bcg']); ?></td>
+                                    <td><?php echo htmlspecialchars($totals['jumlah_dpt']); ?></td>
+                                    <td><?php echo htmlspecialchars($totals['jumlah_campak']); ?></td>
+                                    <td><?php echo htmlspecialchars($totals['jumlah_merah']); ?></td>
+                                    <td><?php echo htmlspecialchars($totals['jumlah_biru']); ?></td>
+                                </tr>
+                            </tfoot>
                         </table>
                     </div>
                 </div>
-                <!-- Akhir dari container khusus untuk pencetakan -->
             </div>
         </div>
     </div>
-
-    <!-- Logout Modal-->
-    <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModalLabel">Ready to Leave?</h5>
-                    <button class="close" type="button" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">×</span>
-                    </button>
-                </div>
-                <div class="modal-body">Select "Logout" below if you are ready to end your current session.</div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancel</button>
-                    <a class="btn btn-primary" href="../../logout.php">Logout</a>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <?php include '../../layout/footer.php'; ?>
 </body>
 

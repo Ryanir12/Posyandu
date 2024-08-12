@@ -48,6 +48,7 @@
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Ambil data dari form
+        $nik = $_POST['nik'];
         $nama_anak = $_POST['nama_anak'];
         $tempat_lahir = $_POST['tempat_lahir'];
         $tanggal_lahir = $_POST['tanggal_lahir'];
@@ -65,6 +66,7 @@
         } else {
             // Query untuk mengubah data anak
             $query_update = "UPDATE anak SET 
+                            nik='$nik',
                             nama_anak='$nama_anak', 
                             tempat_lahir='$tempat_lahir', 
                             tanggal_lahir='$tanggal_lahir', 
@@ -94,6 +96,10 @@
                         <div class="alert alert-danger"><?php echo $error_message; ?></div>
                     <?php endif; ?>
                     <form action="" method="POST">
+                        <div class="form-group">
+                            <label for="nik">NIK Anak</label>
+                            <input type="text" class="form-control" id="nik" name="nik" value="<?php echo isset($data_anak['nik']) ? htmlspecialchars($data_anak['nik']) : ''; ?>" required>
+                        </div>
                         <div class="form-group">
                             <label for="nama_anak">Nama Anak</label>
                             <input type="text" class="form-control" id="nama_anak" name="nama_anak" value="<?php echo htmlspecialchars($data_anak['nama_anak']); ?>" required>
@@ -146,7 +152,6 @@
 
             </div>
         </div>
-
     </div>
     <!-- Logout Modal-->
     <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
